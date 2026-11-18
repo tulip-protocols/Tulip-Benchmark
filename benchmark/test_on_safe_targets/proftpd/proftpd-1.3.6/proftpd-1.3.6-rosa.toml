@@ -1,0 +1,223 @@
+output_dir = "rosa-out"
+cluster_formation_criterion = "edges-only"
+cluster_formation_edge_tolerance = 0
+cluster_formation_syscall_tolerance = 0
+cluster_selection_criterion = "edges-and-syscalls"
+oracle_criterion = "syscalls-only"
+
+[[fuzzers]]
+
+[fuzzers.backend]
+kind = "afl++"
+name = "main"
+mode = "standard"
+is_main = true
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "rosa-seeds"
+output_dir = "fuzzer-out"
+target = [
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.afl",
+    "-n",
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd.conf",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.cmplog",
+    "-p",
+    "explore",
+    "-a",
+    "ascii",
+]
+
+[fuzzers.backend.env]
+AFL_COMPCOV_LEVEL = "2"
+AFL_SKIP_CPUFREQ = "1"
+AFL_NO_ARITH = "1"
+AFL_INST_LIBS = "1"
+AFL_SYNC_TIME = "1"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+ROSA_AFL_DUMP_RUNTIME_TRACES = "1"
+AFL_PRELOAD = "/root/preloads/socket_fuzzing/socketfuzz64.so:/root/preloads/defork_aflpp/defork.so:/root/preeny/x86_64-linux-gnu/eofkiller.so:/root/preeny/x86_64-linux-gnu/dealarm.so:/root/preeny/x86_64-linux-gnu/desigact.so:/root/preeny/x86_64-linux-gnu/derand.so:/root/preeny/x86_64-linux-gnu/detime.so:/root/preeny/x86_64-linux-gnu/desleep.so"
+
+[[fuzzers]]
+
+[fuzzers.backend]
+kind = "afl++"
+name = "fast-libs"
+mode = "standard"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "rosa-seeds"
+output_dir = "fuzzer-out"
+target = [
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.afl",
+    "-n",
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd.conf",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.cmplog",
+    "-p",
+    "fast",
+    "-a",
+    "ascii",
+]
+
+[fuzzers.backend.env]
+AFL_SYNC_TIME = "1"
+AFL_SKIP_CPUFREQ = "1"
+AFL_NO_ARITH = "1"
+AFL_INST_LIBS = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_PRELOAD = "/root/preloads/socket_fuzzing/socketfuzz64.so:/root/preloads/defork_aflpp/defork.so:/root/preeny/x86_64-linux-gnu/eofkiller.so:/root/preeny/x86_64-linux-gnu/dealarm.so:/root/preeny/x86_64-linux-gnu/desigact.so:/root/preeny/x86_64-linux-gnu/derand.so:/root/preeny/x86_64-linux-gnu/detime.so:/root/preeny/x86_64-linux-gnu/desleep.so"
+
+[[fuzzers]]
+
+[fuzzers.backend]
+kind = "afl++"
+name = "exploit-libs"
+mode = "standard"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "rosa-seeds"
+output_dir = "fuzzer-out"
+target = [
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.afl",
+    "-n",
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd.conf",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.cmplog",
+    "-p",
+    "exploit",
+]
+
+[fuzzers.backend.env]
+AFL_SYNC_TIME = "1"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_SKIP_CPUFREQ = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_INST_LIBS = "1"
+AFL_PRELOAD = "/root/preloads/socket_fuzzing/socketfuzz64.so:/root/preloads/defork_aflpp/defork.so:/root/preeny/x86_64-linux-gnu/eofkiller.so:/root/preeny/x86_64-linux-gnu/dealarm.so:/root/preeny/x86_64-linux-gnu/desigact.so:/root/preeny/x86_64-linux-gnu/derand.so:/root/preeny/x86_64-linux-gnu/detime.so:/root/preeny/x86_64-linux-gnu/desleep.so"
+
+[[fuzzers]]
+
+[fuzzers.backend]
+kind = "afl++"
+name = "explore-bin"
+mode = "standard"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "rosa-seeds"
+output_dir = "fuzzer-out"
+target = [
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.afl",
+    "-n",
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd.conf",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.cmplog",
+    "-p",
+    "explore",
+    "-a",
+    "ascii",
+]
+
+[fuzzers.backend.env]
+AFL_COMPCOV_LEVEL = "2"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_SYNC_TIME = "1"
+AFL_NO_ARITH = "1"
+AFL_SKIP_CPUFREQ = "1"
+AFL_PRELOAD = "/root/preloads/socket_fuzzing/socketfuzz64.so:/root/preloads/defork_aflpp/defork.so:/root/preeny/x86_64-linux-gnu/eofkiller.so:/root/preeny/x86_64-linux-gnu/dealarm.so:/root/preeny/x86_64-linux-gnu/desigact.so:/root/preeny/x86_64-linux-gnu/derand.so:/root/preeny/x86_64-linux-gnu/detime.so:/root/preeny/x86_64-linux-gnu/desleep.so"
+
+[[fuzzers]]
+
+[fuzzers.backend]
+kind = "afl++"
+name = "fast-bin"
+mode = "standard"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "rosa-seeds"
+output_dir = "fuzzer-out"
+target = [
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.afl",
+    "-n",
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd.conf",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.cmplog",
+    "-p",
+    "fast",
+    "-a",
+    "ascii",
+]
+
+[fuzzers.backend.env]
+AFL_SYNC_TIME = "1"
+AFL_NO_ARITH = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_SKIP_CPUFREQ = "1"
+AFL_PRELOAD = "/root/preloads/socket_fuzzing/socketfuzz64.so:/root/preloads/defork_aflpp/defork.so:/root/preeny/x86_64-linux-gnu/eofkiller.so:/root/preeny/x86_64-linux-gnu/dealarm.so:/root/preeny/x86_64-linux-gnu/desigact.so:/root/preeny/x86_64-linux-gnu/derand.so:/root/preeny/x86_64-linux-gnu/detime.so:/root/preeny/x86_64-linux-gnu/desleep.so"
+
+[[fuzzers]]
+
+[fuzzers.backend]
+kind = "afl++"
+name = "exploit-bin"
+mode = "standard"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "rosa-seeds"
+output_dir = "fuzzer-out"
+target = [
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.afl",
+    "-n",
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd.conf",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "/root/benchmark/test_on_safe_targets/proftpd/proftpd-1.3.6/proftpd.lto.cmplog",
+    "-p",
+    "exploit",
+]
+
+[fuzzers.backend.env]
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_SYNC_TIME = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_SKIP_CPUFREQ = "1"
+AFL_PRELOAD = "/root/preloads/socket_fuzzing/socketfuzz64.so:/root/preloads/defork_aflpp/defork.so:/root/preeny/x86_64-linux-gnu/eofkiller.so:/root/preeny/x86_64-linux-gnu/dealarm.so:/root/preeny/x86_64-linux-gnu/desigact.so:/root/preeny/x86_64-linux-gnu/derand.so:/root/preeny/x86_64-linux-gnu/detime.so:/root/preeny/x86_64-linux-gnu/desleep.so"
+
+[seed_conditions]
+seconds = 1
+
+[cluster_formation_distance_metric]
+kind = "hamming"
+
+[cluster_selection_distance_metric]
+kind = "hamming"
+
+[oracle]
+kind = "comp-min-max"
+
+[oracle_distance_metric]
+kind = "hamming"

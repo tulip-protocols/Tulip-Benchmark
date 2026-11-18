@@ -1,0 +1,35 @@
+arg_separator = ' ' multiple;
+initial_level = authorization;
+ignored_chars = '\r';
+
+levels:
+  level authorization:
+    USER (arg == "$username" => level = authorization_login_$username | _ => level = authorization),
+    APOP (arg == "$apop_username_digest" => level = transaction | _ => level = authorization),
+    PASS (_),
+    NOOP (_),
+    QUIT (_);
+
+  level authorization_login_$username:
+    PASS (arg == "$password" => level = transaction | _ => level = authorization),
+    USER (arg == "$username" => level = authorization_login_$username | _ => level = authorization),
+    NOOP (_),
+    QUIT (_);
+
+  level transaction:
+    STAT,
+    LIST (arg == "1"),
+    RETR (_),
+    DELE (_),
+    NOOP (_),
+    RSET,
+    QUIT (_);
+
+  level update:
+    QUIT (_);
+
+syscall_monitor:
+  refused:
+    "Error: Unknown command",
+    "Unauthorized",
+    "-ERR.*";

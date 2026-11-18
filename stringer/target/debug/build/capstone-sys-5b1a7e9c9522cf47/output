@@ -1,0 +1,11 @@
+make[1] : on entre dans le répertoire « /home/adoyen/.cargo/git/checkouts/capstone-sys-9f7fe2bc3cf03799/215d877/capstone/cstool »
+make[1]: Rien à faire pour « all ».
+make[1] : on quitte le répertoire « /home/adoyen/.cargo/git/checkouts/capstone-sys-9f7fe2bc3cf03799/215d877/capstone/cstool »
+cd tests && make
+make[1] : on entre dans le répertoire « /home/adoyen/.cargo/git/checkouts/capstone-sys-9f7fe2bc3cf03799/215d877/capstone/tests »
+make[1]: Rien à faire pour « all ».
+make[1] : on quitte le répertoire « /home/adoyen/.cargo/git/checkouts/capstone-sys-9f7fe2bc3cf03799/215d877/capstone/tests »
+install -m0755 ./libcapstone.so.4 ./tests/
+cd ./tests/ && rm -f libcapstone.so && ln -s libcapstone.so.4 libcapstone.so
+cargo:rustc-link-search=native=/home/adoyen/Documents/Git/benchmark/stringer/target/debug/build/capstone-sys-5b1a7e9c9522cf47/out
+cargo:rustc-link-lib=static=capstone

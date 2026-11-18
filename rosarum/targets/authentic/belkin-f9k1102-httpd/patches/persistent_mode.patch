@@ -1,0 +1,152 @@
+diff --git a/targets/authentic/belkin-f9k1102-httpd/original/httpd.c b/targets/authentic/belkin-f9k1102-httpd/original/httpd.c
+index 84a9fb34..d0e79de6 100644
+--- a/httpd.c
++++ b/httpd.c
+@@ -17,6 +17,18 @@
+ #include <sys/select.h>
+ #include <sys/socket.h>
+ #include <unistd.h>
++#include <limits.h>
++
++#ifndef __AFL_FUZZ_TESTCASE_LEN
++  ssize_t fuzz_len;
++  #define __AFL_FUZZ_TESTCASE_LEN fuzz_len
++  unsigned char fuzz_buf[1024000];
++  #define __AFL_FUZZ_TESTCASE_BUF fuzz_buf
++  #define __AFL_FUZZ_INIT() void sync(void);
++  //#define __AFL_LOOP(x) ((fuzz_len = read(0, fuzz_buf, sizeof(fuzz_buf))) > 0 ? 1 : 0)
++  #define __AFL_LOOP(x) ((fuzz_len = fgets((unsigned char*)buf, 1024000, stdin)) > 0 ? 1 : 0)
++  #define __AFL_INIT() sync()
++#endif
+ 
+ int exit_ctrl;
+ char *g_bypass_list;
+@@ -315,10 +327,11 @@ char *get_autherr_page(int param_1) {
+   return "landlogin.htm";
+ }
+ 
++__AFL_FUZZ_INIT();
++
+ int main(int argc, char **argv) {
+   fd_set fdset;
+   struct httpd_connexion hc;
+-  char buf[10000];
+ 
+   hc.socklen = 0x10;
+   hc.port = PORT;
+@@ -328,7 +341,7 @@ int main(int argc, char **argv) {
+   hc.sa.sin_addr.s_addr = htonl(INADDR_ANY);
+   hc.sa.sin_port = htons(hc.port);
+ 
+-  hc.fd_listen = socket(AF_INET, SOCK_STREAM, 0);
++  /*hc.fd_listen = socket(AF_INET, SOCK_STREAM, 0);
+   if (hc.fd_listen < 1) {
+     perror("socket");
+     return 1;
+@@ -342,7 +355,9 @@ int main(int argc, char **argv) {
+   if (listen(hc.fd_listen, 0x400) < 0) {
+     perror("listen");
+     return 1;
+-  }
++  }*/
++
++  hc.fd_listen = 0;
+ 
+   signal(SIGINT, signal_handler);
+   signal(SIGHUP, signal_handler);
+@@ -354,7 +369,7 @@ int main(int argc, char **argv) {
+   init_bypass_list(HTTP_NEEDNT_AUTH);
+ 
+ accept:
+-  hc.fd_accept = accept(hc.fd_listen, (struct sockaddr *)&hc.sa, &hc.socklen);
++  /*hc.fd_accept = accept(hc.fd_listen, (struct sockaddr *)&hc.sa, &hc.socklen);
+   if (hc.fd_accept < 0) {
+     perror("accept");
+     return 1;
+@@ -363,7 +378,10 @@ accept:
+   if (hc.out_stream == NULL) {
+     perror("fdopen");
+     return 1;
+-  }
++  }*/
++
++  hc.fd_accept = 0;
++  hc.out_stream = stdin;
+ 
+   char ip_str[16];
+   sprintf(ip_str, "%d.%d.%d.%d", hc.sa.sin_addr.s_addr & 0xff,
+@@ -396,9 +414,25 @@ accept:
+ 
+     FD_ZERO(&fdset);
+   */
+-  if (fgets(buf, sizeof(buf), hc.out_stream) == NULL) {
++
++  #ifdef __AFL_HAVE_MANUAL_CONTROL
++    __AFL_INIT();
++  #endif
++
++  /*if (fgets(buf, 10000, hc.out_stream) == NULL) {
+     goto close_connexion;
+-  }
++  }*/
++
++  unsigned char* buf = __AFL_FUZZ_TESTCASE_BUF;
++  ssize_t len = __AFL_FUZZ_TESTCASE_LEN;
++
++  int i = 0;
++
++  // FUZZING LOOP BEGIN
++  while (__AFL_LOOP(UINT_MAX))
++  {
++
++  len = __AFL_FUZZ_TESTCASE_LEN;
+ 
+   if (memcmp(buf, "GET", 3) && memcmp(buf, "POST", 4)) {
+   not_implemented:
+@@ -461,8 +495,8 @@ accept:
+   char *authorization = NULL;
+   char *boundary = NULL;
+ 
+-  while (true) {
+-    fgets(p, 10000 - (int)(p - buf), hc.out_stream);
++  /*while (true) {
++    //fgets(p, 10000 - (int)(p - (char*)buf), hc.out_stream);
+     size_t read_size = strlen(p);
+     if (strncmp(p, "Authorization:", 14) == 0) {
+       size_t nb_spaces = strspn(&p[14], " \t");
+@@ -496,7 +530,7 @@ accept:
+       break;
+     }
+     p += read_size;
+-  }
++  }*/
+ 
+   /*
+   printf("method = %s\n", method);
+@@ -557,14 +591,14 @@ accept:
+   }
+ 
+ close_connexion:
+-  if (hc.out_stream) {
++  /*if (hc.out_stream) {
+     fflush(hc.out_stream);
+     fclose(hc.out_stream);
+     close(hc.fd_accept);
+-  }
++  }*/
+   if (exit_ctrl == 1) {
+-    shutdown(hc.fd_listen, 2);
+-    close(hc.fd_listen);
++    //shutdown(hc.fd_listen, 2);
++    //close(hc.fd_listen);
+     return 0;
+   }
+   if (exit_ctrl == 2) {
+@@ -576,3 +610,6 @@ close_connexion:
+   goto accept;
+   return 0;
+ }
++
++// FUZZING LOOP END
++}
+\ No newline at end of file

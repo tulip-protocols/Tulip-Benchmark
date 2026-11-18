@@ -1,0 +1,13 @@
+diff --git a/main.c b/main.c
+index eaba265..5dcf128 100644
+--- a/main.c
++++ b/main.c
+@@ -35,6 +35,8 @@ static void limits_init(void);
+ int
+ main(int argc, const char* argv[])
+ {
++  write(-1, "__ROSAS_CANTINA__", 17);
++
+   struct vsf_session the_session =
+   {
+     /* Control connection */

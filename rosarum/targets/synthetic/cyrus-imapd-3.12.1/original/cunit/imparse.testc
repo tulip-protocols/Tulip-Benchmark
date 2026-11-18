@@ -1,0 +1,186 @@
+#include <config.h>
+
+#include "cunit/cyrunit.h"
+
+#include "lib/imparse.h"
+
+/* XXX test imparse_word() */
+
+/* XXX test imparse_astring() */
+
+/* tests for imparse_isatom() and imparse_isnatom()
+ * XXX test strings not just single chars */
+static void test_isatom(void)
+{
+    const char contains_null[] = "he\0llo";
+    const char hello[] = "hello";
+    char tmp[2] = {0};
+    int i;
+
+    /* not an atom if there's a NULL byte in the mapped space */
+    CU_ASSERT_EQUAL_FATAL(sizeof(contains_null), 7);
+    CU_ASSERT_EQUAL(imparse_isnatom(contains_null, sizeof(contains_null)), 0);
+
+    /*
+     * https://tools.ietf.org/html/rfc3501#page-81
+     *
+     * atom            = 1*ATOM-CHAR
+     *
+     * ATOM-CHAR       = <any CHAR except atom-specials>
+     *
+     * atom-specials   = "(" / ")" / "{" / SP / CTL / list-wildcards /
+     * 				     quoted-specials / resp-specials
+     *
+     * list-wildcards  = "%" / "*"
+     *
+     * quoted-specials = DQUOTE / "\"
+     *
+     * resp-specials   = "]"
+     *
+     * https://www.rfc-editor.org/rfc/rfc5234
+     * CTL             =  %x00-1F / %x7F
+     */
+
+    /* atom-specials */
+    CU_ASSERT_EQUAL(imparse_isatom("("), 0);
+    CU_ASSERT_EQUAL(imparse_isatom(")"), 0);
+    CU_ASSERT_EQUAL(imparse_isatom("{"), 0);
+    CU_ASSERT_EQUAL(imparse_isatom(" "), 0);
+
+    /* CTL */
+    for (i = 0; i <= 0x1f; i++) {
+        tmp[0] = i;
+        CU_ASSERT_EQUAL(imparse_isatom(tmp), 0);
+    }
+    tmp[0] = 0x7f;
+    CU_ASSERT_EQUAL(imparse_isatom(tmp), 0);
+
+    /* list-wildcards */
+    CU_ASSERT_EQUAL(imparse_isatom("%"), 0);
+    CU_ASSERT_EQUAL(imparse_isatom("*"), 0);
+
+    /* quoted-specials */
+    CU_ASSERT_EQUAL(imparse_isatom("\""), 0);
+    CU_ASSERT_EQUAL(imparse_isatom("\\"), 0);
+
+    /* resp-specials */
+    // XXX - revert this when we block ] in atoms again
+    CU_ASSERT_NOT_EQUAL(imparse_isatom("]"), 0);
+
+    /* make sure it doesn't just always return zero... */
+    CU_ASSERT_NOT_EQUAL(imparse_isatom(hello), 0);
+}
+
+/* XXX test imparse_issequence() */
+
+/* XXX test imparse_isnumber() */
+
+static void test_istag(void)
+{
+    const char hello[] = "hello";
+    const char *const forbidden_http_methods[] = {
+        "ACL", "BIND", "LOCK", "MKCALENDAR", "MKCOL", "PATCH", "POST",
+        "PROPFIND", "PROPPATCH", "PUT", "REPORT", "SEARCH", "UNBIND",
+    };
+    const int n_forbidden_http_methods = sizeof(forbidden_http_methods)
+                                         / sizeof(forbidden_http_methods[0]);
+    char tmp[2] = { 0 };
+    int i;
+
+    /* if it's not an atom, it definitely can't be a tag */
+    for (i = 0; i <= 0xff; i++) {
+        tmp[0] = (char) i;
+        if (!imparse_isatom(tmp))
+            CU_ASSERT_EQUAL(imparse_istag(tmp, 0), 0);
+    }
+
+    /* there used to be an explicit (albeit redundant) check for this case */
+    tmp[0] = '*';
+    CU_ASSERT_EQUAL(imparse_istag(tmp, 0), 0);
+
+    /* "." tag idiomatic when telnetting to imap server, don't break that */
+    tmp[0] = '.';
+    CU_ASSERT_NOT_EQUAL(imparse_istag(tmp, 0), 0);
+
+    /* angle brackets exploitable in cross-protocol reflection attacks */
+    tmp[0] = '<';
+    CU_ASSERT_EQUAL(imparse_istag(tmp, 0), 0);
+    tmp[0] = '>';
+    CU_ASSERT_EQUAL(imparse_istag(tmp, 0), 0);
+
+    /* colon character in tag suggests confused HTTP client */
+    tmp[0] = ':';
+    CU_ASSERT_EQUAL(imparse_istag(tmp, 0), 0);
+
+    /* make sure it doesn't just always return zero... */
+    CU_ASSERT_NOT_EQUAL(imparse_istag(hello, 0), 0);
+
+    for (i = 0; i < n_forbidden_http_methods; i++) {
+        /* reject forbidden HTTP method used as tag on the first command */
+        CU_ASSERT_EQUAL(imparse_istag(forbidden_http_methods[i], 0), 0);
+
+        /* but permit during an established session */
+        CU_ASSERT_NOT_EQUAL(imparse_istag(forbidden_http_methods[i], 1), 0);
+    }
+}
+
+static void test_parse_range(void)
+{
+    range_t range;
+
+    /*
+     * https://tools.ietf.org/html/rfc9051#name-formal-syntax
+     *
+     * nz-number       = digit-nz *DIGIT
+     *                     ; Non-zero unsigned 32-bit integer
+     *                     ; (0 < n < 4,294,967,296)
+     *
+     *
+     * https://tools.ietf.org/html/rfc9394#name-formal-syntax
+     *
+     * MINUS               = "-"
+     *
+     * partial-range-first = nz-number ":" nz-number
+     *     ;; Request to search from oldest (lowest UIDs) to
+     *     ;; more recent messages.
+     *     ;; A range 500:400 is the same as 400:500.
+     *     ;; This is similar to <seq-range> from [RFC3501]
+     *     ;; but cannot contain "*".
+     *
+     * partial-range-last  = MINUS nz-number ":" MINUS nz-number
+     *     ;; Request to search from newest (highest UIDs) to
+     *     ;; oldest messages.
+     *     ;; A range -500:-400 is the same as -400:-500.
+     *
+     * partial-range       = partial-range-first / partial-range-last
+     */
+
+    CU_ASSERT_EQUAL(imparse_range("1:1", &range), 0);
+    CU_ASSERT_EQUAL(imparse_range("1:2", &range), 0);
+    CU_ASSERT_EQUAL(imparse_range("2:1", &range), 0);
+    CU_ASSERT_EQUAL(imparse_range("-1:-2", &range), 0);
+    CU_ASSERT_EQUAL(imparse_range("-2:-1", &range), 0);
+
+    CU_ASSERT_EQUAL(imparse_range("1:-2", &range), 0);
+    CU_ASSERT_EQUAL(imparse_range("-1:2", &range), 0);
+
+    CU_ASSERT_NOT_EQUAL(imparse_range("0:1", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("--1:-2", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("+1:-2", &range), 0);
+
+    CU_ASSERT_NOT_EQUAL(imparse_range("1", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("1:", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range(":1", &range), 0);
+
+    CU_ASSERT_NOT_EQUAL(imparse_range("1:a", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("-1:-a", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("1a:2", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("1:2a", &range), 0);
+
+    CU_ASSERT_NOT_EQUAL(imparse_range("1:4294967296", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("-1:-4294967296", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("1:18446744073709551616", &range), 0);
+    CU_ASSERT_NOT_EQUAL(imparse_range("-1:-18446744073709551616", &range), 0);
+}
+
+/* vim: set ft=c */

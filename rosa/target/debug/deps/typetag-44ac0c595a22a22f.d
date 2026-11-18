@@ -1,0 +1,12 @@
+/home/adoyen/Documents/Git/benchmark/rosa/target/debug/deps/typetag-44ac0c595a22a22f.d: /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/lib.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/adjacently.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/content.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/de.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/externally.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/internally.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/is_serialize_str.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/ser.rs
+
+/home/adoyen/Documents/Git/benchmark/rosa/target/debug/deps/libtypetag-44ac0c595a22a22f.rmeta: /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/lib.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/adjacently.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/content.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/de.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/externally.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/internally.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/is_serialize_str.rs /home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/ser.rs
+
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/lib.rs:
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/adjacently.rs:
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/content.rs:
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/de.rs:
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/externally.rs:
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/internally.rs:
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/is_serialize_str.rs:
+/home/adoyen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typetag-0.2.20/src/ser.rs:

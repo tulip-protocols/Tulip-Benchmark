@@ -1,0 +1,5 @@
+warning: `package.edition` is unspecified, defaulting to `2015` while the latest is `2024`
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s

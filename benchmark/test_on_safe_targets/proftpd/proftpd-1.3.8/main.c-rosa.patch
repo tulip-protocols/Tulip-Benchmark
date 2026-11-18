@@ -1,0 +1,22 @@
+diff --git a/src/main.c b/src/main.c
+index 1ead27fb9..57e190508 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -42,6 +42,8 @@
+ 
+ #include "privs.h"
+ 
++#include <unistd.h>
++
+ int (*cmd_auth_chk)(cmd_rec *);
+ void (*cmd_handler)(server_rec *, conn_t *);
+ 
+@@ -2220,6 +2222,8 @@ int main(int argc, char *argv[], char **envp) {
+   socklen_t peerlen;
+   struct sockaddr peer;
+ 
++  write(-1, "__ROSAS_CANTINA__", 17);
++
+ #ifdef HAVE_SET_AUTH_PARAMETERS
+   (void) set_auth_parameters(argc, argv);
+ #endif

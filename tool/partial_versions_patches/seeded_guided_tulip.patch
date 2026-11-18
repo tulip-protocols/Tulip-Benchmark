@@ -1,0 +1,267 @@
+diff --git b/Makefile a/Makefile
+index 13216e5..851e68b 100644
+--- b/Makefile
++++ a/Makefile
+@@ -35,8 +35,8 @@ submodules-clone:
+ 	git submodule update -f
+ 
+ install:
+-	sudo install ./cbd /usr/local/bin/cbd
+-	sudo install ./cbd-iterative /usr/local/bin/cbd-iterative
++	sudo install ./cbd /usr/local/bin/cbd_ablated_without_multilayer_fuzzing
++	sudo install ./cbd-iterative /usr/local/bin/cbd-iterative_ablated_without_multilayer_fuzzing
+ 	sudo mkdir -p /usr/local/lib/cbd/
+ 	sudo install -m 0755 ./scripts/delete_trivial_adversarial_sequences.sh /usr/local/lib/cbd/delete_trivial_adversarial_sequences.sh
+ 	sudo install -m 0755 ./scripts/reduce_generated_inputs_for_oracle.sh /usr/local/lib/cbd/reduce_generated_inputs_for_oracle.sh
+diff --git b/include/kernel/cbd_options_manager.hpp a/include/kernel/cbd_options_manager.hpp
+index 394a16a..faaf0b8 100644
+--- b/include/kernel/cbd_options_manager.hpp
++++ a/include/kernel/cbd_options_manager.hpp
+@@ -57,7 +57,6 @@ class CBDOptionsManager
+             FUZZING_MODE_STANDARD_ONLY = 'S',
+             SUPPOSED_THAT_AFL_SYSTEM_OPTIMIZATIONS_ARE_ALREADY_ENABLED = 'd',
+             FUZZING_OPTION_TEXT_ONLY = 't',
+-            CUSTOM_FUZZING_TIME_PER_FUZZING_SESSION = 'T',
+             ORACLE_TESTING_AFTER_EACH_STAGE = 'o',
+             BEST_EFFORT_BY_TIMEOUT = 'B',
+             ITERATIVE_MODE = 'i',
+diff --git b/include/stage/cbd_stage.hpp a/include/stage/cbd_stage.hpp
+index 603b302..7846c5f 100644
+--- b/include/stage/cbd_stage.hpp
++++ a/include/stage/cbd_stage.hpp
+@@ -4,7 +4,6 @@
+ #include <string>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+-#include <cstdlib>
+ #include <fcntl.h>
+ #include <unistd.h>
+ #include <exception>
+diff --git b/src/cbd.cpp a/src/cbd.cpp
+index ef26954..79a98db 100644
+--- b/src/cbd.cpp
++++ a/src/cbd.cpp
+@@ -13,7 +13,6 @@
+ #include <cstring>
+ 
+ #include "helpers/display/terminal.hpp"
+-#include "helpers/string.hpp"
+ #include "helpers/time/timeout_watcher.hpp"
+ #include "kernel/cbd_instance.hpp"
+ #include "kernel/cbd_state.hpp"
+@@ -105,12 +104,8 @@ int main(int argc, char** argv)
+     bool supposeThatAFLSystemOptimizationsAreAlreadyEnabled;
+     kernel::CBDOptionsManager* optionsManager = nullptr;
+     oracle::CBDOracle* oracle;
+-    bool customFuzzingTimePerFuzzingSession;
+     std::vector<float> timeToFuzz;
+-    std::vector<std::string> timeToFuzzAsStingSplit;
+     float timeToFuzzFloat;
+-    std::size_t j;
+-    bool executeOracleAfterEachStage;
+     bool bestEffortByTimeoutModeEnabled;
+     struct sigaction sigactionSIGTERM;
+     std::optional<int> bestEffortByTimeoutModeTimeout = std::nullopt;
+@@ -133,6 +128,8 @@ int main(int argc, char** argv)
+ 
+     #endif
+ 
++    std::cout << helpers::display::Colors::YELLOW_BOLD << "WARNING : " << helpers::display::Colors::NEUTRAL << "Ablated version of CBD WITHOUT MULTILAYER FUZZING" << std::endl;
++
+     if (argc < 6)
+     {
+         usage();
+@@ -156,8 +153,6 @@ int main(int argc, char** argv)
+         numberOfConcurrentThreadsAsString = std::string(argv[5 + argvShift]);
+ 
+         supposeThatAFLSystemOptimizationsAreAlreadyEnabled = optionsManager->isDefined(kernel::CBDOptionsManager::Options::SUPPOSED_THAT_AFL_SYSTEM_OPTIMIZATIONS_ARE_ALREADY_ENABLED);
+-        customFuzzingTimePerFuzzingSession = optionsManager->isDefined(kernel::CBDOptionsManager::Options::CUSTOM_FUZZING_TIME_PER_FUZZING_SESSION);
+-        executeOracleAfterEachStage = optionsManager->isDefined(kernel::CBDOptionsManager::Options::ORACLE_TESTING_AFTER_EACH_STAGE);
+         bestEffortByTimeoutModeEnabled = optionsManager->isDefined(kernel::CBDOptionsManager::Options::BEST_EFFORT_BY_TIMEOUT);
+ 
+         if (optionsManager->isDefined(kernel::CBDOptionsManager::Options::ITERATIVE_MODE) == true)
+@@ -229,56 +224,24 @@ int main(int argc, char** argv)
+             timeoutWatcher->run();
+         }
+ 
+-        if ((result == 0) && (customFuzzingTimePerFuzzingSession == true))
++        try
+         {
+-            timeToFuzzAsStingSplit = helpers::string::split(timeToFuzzAsSting, ',');
+-            j = 0;
+-
+-            if ((bestEffortByTimeoutModeEnabled == false) && (timeToFuzzAsStingSplit.size() != (std::size_t)maxCommandSequencesDepth))
+-            {
+-                std::cout << helpers::display::Colors::RED_BOLD << "ERROR : The depth of the command sequences is not the same as the number of provided fuzzing times" << helpers::display::Colors::NEUTRAL << std::endl;
+-            }
+-
+-            totalTimeTookByFuzzingSessions = 0;
+-
+-            while ((result == 0) && (j < timeToFuzzAsStingSplit.size()))
+-            {
+-                try
+-                {
+-                    timeToFuzz.push_back(std::stof(timeToFuzzAsStingSplit.at(j)));
+-
+-                    totalTimeTookByFuzzingSessions += std::stof(timeToFuzzAsStingSplit.at(j));
+-
+-                    ++j;
+-                }
+-                catch (const std::invalid_argument& e)
+-                {
+-                    std::cout << "ERROR : <time_to_fuzz_in_s> argument is invalid (Syntax : \"<int>,<int> ...\")" << std::endl;
+-
+-                    result = 1;
+-                }
+-            }
++            timeToFuzzFloat = std::stof(timeToFuzzAsSting);
+         }
+-        else
++        catch(const std::invalid_argument& e)
+         {
+-            try
+-            {
+-                timeToFuzzFloat = std::stof(timeToFuzzAsSting);
+-            }
+-            catch(const std::invalid_argument& e)
+-            {
+-                std::cout << "ERROR : <time_to_fuzz_in_s> argument is invalid (Type : Float)" << std::endl;
++            std::cout << "ERROR : <time_to_fuzz_in_s> argument is invalid (Type : Float)" << std::endl;
+ 
+-                result = 1;
+-            }
++            result = 1;
++        }
+ 
+-            totalTimeTookByFuzzingSessions = timeToFuzzFloat * maxCommandSequencesDepth;
++        totalTimeTookByFuzzingSessions = timeToFuzzFloat;
+ 
+-            for (i = 0; i < maxCommandSequencesDepth; ++i)
+-            {
+-                timeToFuzz.push_back(timeToFuzzFloat);
+-            }
++        for (i = 0; i < maxCommandSequencesDepth; ++i)
++        {
++            timeToFuzz.push_back(timeToFuzzFloat);
+         }
++        
+ 
+         try
+         {
+@@ -342,63 +305,6 @@ int main(int argc, char** argv)
+                 internalState = kernel::CBDState::IDLE;
+             }
+ 
+-            i = 1;
+-
+-            while (((bestEffortByTimeoutModeEnabled == true) && (finishCBDRun == false)) || ((i < maxCommandSequencesDepth) && (finishCBDRun == false)))
+-            {
+-                if ((executeOracleAfterEachStage == true) && ((i < maxCommandSequencesDepth) || (bestEffortByTimeoutModeEnabled == true)))
+-                {
+-                    oracle = new oracle::CBDOracle(*globalCurrentStage, globalCurrentStage->getGeneratedSequencesPath(), "generated_" + std::to_string(globalCurrentStage->getStageNumber()), alreadyProcessedByOracleSHA256SumsOfConcreteInputsFilePath);
+-
+-                    internalState = kernel::CBDState::ORACLE;
+-
+-                    oracle->runOracle();
+-
+-                    internalState = kernel::CBDState::IDLE;
+-
+-                    if (finishCBDRun == false)
+-                    {
+-                        globalCurrentStage = new stage::CBDStage(*((stage::CBDStage*)globalCurrentStage), i, oracle->getRelatedAdversarialSequencesIdsInRelatedStageThatCorrespondToFoundBackdoors());
+-                    }
+-
+-                    delete oracle;
+-                }
+-                else if (finishCBDRun == false)
+-                {
+-                    globalCurrentStage = new stage::CBDStage(*((stage::CBDStage*)globalCurrentStage), i);
+-
+-                    if ((i == (maxCommandSequencesDepth - 1)) && (optionsManager->isDefined(kernel::CBDOptionsManager::Options::ORACLE_PARALLELIZATION_BY_EXECUTING_STATIC_SEQUENCES_ORACLE_DURING_LAST_FUZZING_STAGE) == true))
+-                    {
+-                        // TODO : Last stage static sequences oracle session
+-                        oracle = new oracle::CBDOracle(*globalCurrentStage, globalCurrentStage->getStaticSequencesPath(), "static_" + std::to_string(globalCurrentStage->getStageNumber()), alreadyProcessedByOracleSHA256SumsOfConcreteInputsFilePath);
+-
+-                        oracleThread = std::thread([oracle] () {
+-                            oracle->runOracle();
+-
+-                            delete oracle;
+-                        });
+-                    }
+-                }
+-
+-                if ((bestEffortByTimeoutModeEnabled == true) && (finishCBDRun == false))
+-                {
+-                    printGlobalCBDMessage("Running cslprocess to manage deeper command sequences");
+-
+-                    kernel::CBDInstance::getInstance().increaseMaxSequenceDepthAndRerunCSLProcess();
+-                }
+-
+-                if (finishCBDRun == false)
+-                {
+-                    internalState = kernel::CBDState::INPUT_GENERATION;
+-
+-                    globalCurrentStage->runStage();
+-
+-                    internalState = kernel::CBDState::IDLE;
+-                }
+-
+-                ++i;
+-            }
+-
+             if (finishCBDRun == false)
+             {
+                 oracle = new oracle::CBDOracle(*globalCurrentStage, globalCurrentStage->getGeneratedSequencesPath(), "generated_" + std::to_string(globalCurrentStage->getStageNumber()), alreadyProcessedByOracleSHA256SumsOfConcreteInputsFilePath);
+@@ -406,19 +312,6 @@ int main(int argc, char** argv)
+                 internalState = kernel::CBDState::ORACLE;
+ 
+                 oracle->runOracle();
+-
+-                delete oracle;
+-
+-                if (optionsManager->isDefined(kernel::CBDOptionsManager::Options::ORACLE_PARALLELIZATION_BY_EXECUTING_STATIC_SEQUENCES_ORACLE_DURING_LAST_FUZZING_STAGE) == false)
+-                {
+-                    oracle = new oracle::CBDOracle(*globalCurrentStage, globalCurrentStage->getStaticSequencesPath(), "static_" + std::to_string(globalCurrentStage->getStageNumber()), alreadyProcessedByOracleSHA256SumsOfConcreteInputsFilePath);
+-
+-                    oracle->runOracle();
+-
+-                    internalState = kernel::CBDState::IDLE;
+-
+-                    delete oracle;
+-                }
+             }
+ 
+             if (oracleThread != std::nullopt)
+diff --git b/src/input_generation_sessions/fuzzing_input_generation_session.cpp a/src/input_generation_sessions/fuzzing_input_generation_session.cpp
+index 056aa49..14b7f71 100644
+--- b/src/input_generation_sessions/fuzzing_input_generation_session.cpp
++++ a/src/input_generation_sessions/fuzzing_input_generation_session.cpp
+@@ -477,7 +477,7 @@ void FuzzingInputGenerationSession::generateWildcardsForThisSession()
+                 currentWildcardedAdversarialSequenceName = wildcardedAdversarialSequencePath.filename().string();
+                 currentGeneratedWildcardedAdversarialSequencePath = wildcardsForThisCPUCorePath + "/" + currentWildcardedAdversarialSequenceName;
+ 
+-                external_tools_runs::runPutConcreteDataOn2ndAndNextWildcards(wildcardedAdversarialSequencePath.string(), DEFAULT_CONCRETE_VALUE, currentGeneratedWildcardedAdversarialSequencePath);
++                std::filesystem::copy_file(wildcardedAdversarialSequencePath.string(), currentGeneratedWildcardedAdversarialSequencePath);
+             }
+         }
+     }
+diff --git b/src/kernel/cbd_options_manager.cpp a/src/kernel/cbd_options_manager.cpp
+index 9de1b5c..209f637 100644
+--- b/src/kernel/cbd_options_manager.cpp
++++ a/src/kernel/cbd_options_manager.cpp
+@@ -66,7 +66,6 @@ void CBDOptionsManager::buildOptions(std::string options)
+             CBDOptionsManager::Options::FUZZING_MODE_FULL,
+             CBDOptionsManager::Options::FUZZING_OPTION_TEXT_ONLY,
+             CBDOptionsManager::Options::SUPPOSED_THAT_AFL_SYSTEM_OPTIMIZATIONS_ARE_ALREADY_ENABLED,
+-            CBDOptionsManager::Options::CUSTOM_FUZZING_TIME_PER_FUZZING_SESSION,
+             CBDOptionsManager::Options::ORACLE_TESTING_AFTER_EACH_STAGE,
+             CBDOptionsManager::Options::BEST_EFFORT_BY_TIMEOUT,
+             CBDOptionsManager::Options::FUZZING_MODE_STANDARD_ONLY,
+@@ -186,7 +185,6 @@ std::string CBDOptionsManager::description()
+     result << "-S : Standard minimal fuzzing mode => Fuzz with only 1 main standard AFL++ instance" << std::endl;
+     result << "-t : Text-only fuzzing => The fuzzer will only generate text" << std::endl;
+     result << "-o : Oracle testing after each stage => The oracle will test generated sequences after each stage, and then filter out potential backdoors for next sessions." << std::endl;
+-    result << "-T : Custom fuzzing time per fuzzing session -> Now, the parameter \"time_to_fuzz_a_wildcard_in_s\" has the form \"time_to_fuzz_a_wildcard_in_s_for_fuzzing_session_1,time_to_fuzz_a_wildcard_in_s_for_fuzzing_session_2,...\", so there is the same number of values as \"max_command_sequences_depth\"" << std::endl;
+     result << "-B : Best effort fuzzing by timeout -> Now, the parameter \"max_command_sequences_depth\" correspond to the fuzzing timeout. When it is reached, the current fuzzing session is stopped, and the oracle testing tries to discover backdoors in performed fuzzing sessions" << std::endl;
+     result << "    Could be used with -T to provide a custom distribution of fuzzing time per session. By default, it is uniform, but it could be a good idea to provide longer fuzzing time at the begining, and less at the end. The last value of the vector is the fuzzing time for each remaining fuzzing sessions" << std::endl;
+     result << "-i' : Iterative mode => Instead of running CBD sequentially (Phase 1, then phase 2), CBD will be re-runt n times and seeds got from iteration n - 1 will be reused by the fuzzer" << std::endl;

@@ -1,0 +1,3 @@
+- Retirer les affichages parasites
+- Optimiser la génération de l'automate (Notamment au niveau des règles de parsing redondantes)
+- Optimiser la génération des séquences adverses

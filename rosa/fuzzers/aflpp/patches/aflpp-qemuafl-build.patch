@@ -1,0 +1,18 @@
+--- a/qemu_mode/build_qemu_support.sh
++++ b/qemu_mode/build_qemu_support.sh
+@@ -30,6 +30,7 @@
+ #
+ 
+ QEMUAFL_VERSION="$(cat ./QEMUAFL_VERSION)"
++NO_CHECKOUT=1
+ 
+ echo "================================================="
+ echo "           QemuAFL build script"
+@@ -204,6 +205,7 @@ QEMU_CONF_FLAGS=" \
+   --without-default-devices \
+   --extra-cflags=-Wno-int-conversion \
+   --disable-werror \
++  --with-git-submodules=ignore \
+   "
+ 
+ if [ -n "${CROSS_PREFIX}" ]; then

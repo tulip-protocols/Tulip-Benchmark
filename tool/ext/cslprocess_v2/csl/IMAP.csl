@@ -1,0 +1,49 @@
+arg_separator = ' ' multiple;
+initial_level = not_authenticated;
+commands_prefix = "A ";
+split_adversarial_sequences_args = yes;
+
+levels:
+  level not_authenticated:
+    CAPABILITY,
+    NOOP,
+    LOGOUT,
+    STARTTLS,
+    LOGIN (arg == "$user_password" => level = authenticated | _);
+
+  level authenticated:
+    CAPABILITY,
+    NOOP,
+    LOGOUT,
+    SELECT (_),
+    EXAMINE (_),
+    CREATE (_),
+    DELETE (_),
+    RENAME (_),
+    SUBSCRIBE (_),
+    UNSUBSCRIBE (_),
+    LIST (_),
+    LSUB (_),
+    STATUS (_),
+    APPEND (_),
+    GETMETADATA (_),
+    SETMETADATA (_);
+
+  level selected:
+    CAPABILITY,
+    NOOP,
+    LOGOUT,
+    CHECK,
+    CLOSE (_ => level = authenticated),
+    EXPUNGE,
+    SEARCH (_),
+    FETCH (_),
+    STORE (_),
+    COPY (_),
+    UID (_),
+    GETMETADATA (_),
+    SETMETADATA (_);
+
+syscall_monitor:
+  refused:
+    "A NO.*";

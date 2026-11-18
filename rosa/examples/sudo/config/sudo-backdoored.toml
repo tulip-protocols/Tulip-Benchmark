@@ -1,0 +1,190 @@
+output_dir = "rosa-out-sudo-backdoored"
+
+[seed_conditions]
+seconds = 60
+
+
+[[fuzzers]]
+[fuzzers.backend]
+kind = "afl++"
+mode = "qemu"
+name = "main"
+is_main = true
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "/root/rosa/examples/sudo/seeds"
+output_dir = "fuzzer-out-sudo-backdoored"
+target = [
+    "/root/rosa/examples/sudo/target/backdoored/build/bin/sudo",
+    "-Sk",
+    "--",
+    "id",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "0",
+    "-p",
+    "explore",
+    "-a",
+    "ascii",
+]
+[fuzzers.backend.env]
+ROSA_AFL_DUMP_RUNTIME_TRACES = "1"
+AFL_NO_ARITH = "1"
+AFL_SYNC_TIME = "1"
+AFL_SKIP_CPUFREQ = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_INST_LIBS = "1"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+
+[[fuzzers]]
+[fuzzers.backend]
+kind = "afl++"
+mode = "qemu"
+name = "fast-libs"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "/root/rosa/examples/sudo/seeds"
+output_dir = "fuzzer-out-sudo-backdoored"
+target = [
+    "/root/rosa/examples/sudo/target/backdoored/build/bin/sudo",
+    "-Sk",
+    "--",
+    "id",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "0",
+    "-p",
+    "fast",
+    "-a",
+    "ascii",
+]
+[fuzzers.backend.env]
+AFL_SYNC_TIME = "1"
+AFL_NO_ARITH = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_SKIP_CPUFREQ = "1"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_INST_LIBS = "1"
+
+[[fuzzers]]
+[fuzzers.backend]
+kind = "afl++"
+mode = "qemu"
+name = "exploit-libs"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "/root/rosa/examples/sudo/seeds"
+output_dir = "fuzzer-out-sudo-backdoored"
+target = [
+    "/root/rosa/examples/sudo/target/backdoored/build/bin/sudo",
+    "-Sk",
+    "--",
+    "id",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "0",
+    "-p",
+    "exploit",
+]
+[fuzzers.backend.env]
+AFL_COMPCOV_LEVEL = "2"
+AFL_SYNC_TIME = "1"
+AFL_SKIP_CPUFREQ = "1"
+AFL_INST_LIBS = "1"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+
+
+[[fuzzers]]
+[fuzzers.backend]
+kind = "afl++"
+mode = "qemu"
+name = "explore-bin"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "/root/rosa/examples/sudo/seeds"
+output_dir = "fuzzer-out-sudo-backdoored"
+target = [
+    "/root/rosa/examples/sudo/target/backdoored/build/bin/sudo",
+    "-Sk",
+    "--",
+    "id",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "0",
+    "-p",
+    "explore",
+    "-a",
+    "ascii",
+]
+[fuzzers.backend.env]
+AFL_SYNC_TIME = "1"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_SKIP_CPUFREQ = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_NO_ARITH = "1"
+
+[[fuzzers]]
+[fuzzers.backend]
+kind = "afl++"
+mode = "qemu"
+name = "fast-bin"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "/root/rosa/examples/sudo/seeds"
+output_dir = "fuzzer-out-sudo-backdoored"
+target = [
+    "/root/rosa/examples/sudo/target/backdoored/build/bin/sudo",
+    "-Sk",
+    "--",
+    "id",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "0",
+    "-p",
+    "fast",
+    "-a",
+    "ascii",
+]
+[fuzzers.backend.env]
+AFL_SYNC_TIME = "1"
+AFL_NO_ARITH = "1"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_SKIP_CPUFREQ = "1"
+
+[[fuzzers]]
+[fuzzers.backend]
+kind = "afl++"
+mode = "qemu"
+name = "exploit-bin"
+is_main = false
+afl_fuzz = "/root/rosa/fuzzers/aflpp/aflpp/afl-fuzz"
+input_dir = "/root/rosa/examples/sudo/seeds"
+output_dir = "fuzzer-out-sudo-backdoored"
+target = [
+    "/root/rosa/examples/sudo/target/backdoored/build/bin/sudo",
+    "-Sk",
+    "--",
+    "id",
+]
+input = "stdin"
+extra_args = [
+    "-c",
+    "0",
+    "-p",
+    "exploit",
+]
+[fuzzers.backend.env]
+AFL_SKIP_CPUFREQ = "1"
+AFL_SYNC_TIME = "1"
+AFL_COMPCOV_LEVEL = "2"
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES = "1"

@@ -1,0 +1,66 @@
+arg_separator = ' ' | '\t' | '"' | '\v' multiple;
+initial_level = authentication;
+ignore_empty_commands = yes;
+ignored_chars = '"' | '\r';
+
+levels:
+  level authentication:
+    USER (arg == "$username" => level = authentication_$username | _ => level = authentication),
+    NOOP (_),
+    FEAT (_),
+    SYST (_),
+    TYPE (_),
+    OPTS (_),
+    HELP (_),
+    SITE help,
+    QUIT (_);
+
+  level authentication_$username:
+    PASS (arg == "$password" => level = authenticated_$username | _ => level = authentication),
+    USER (arg == "$username" => level = authentication_$username | _ => level = authentication),
+    NOOP (_),
+    FEAT (_),
+    OPTS (_),
+    SYST (_),
+    TYPE (_),
+    HELP (_),
+    SITE help,
+    QUIT (_);
+
+  level authenticated_$username:
+    CWD (_),
+    CDUP,
+    SMNT (_),
+    QUIT (_),
+    REIN,
+    PORT (_),
+    PASV,
+    TYPE (_),
+    STRU (_),
+    MODE (_),
+    RETR (_),
+    STOR (_),
+    STOU (_),
+    APPE (_),
+    ALLO (_),
+    REST (_),
+    RNFR (_),
+    RNTO (_),
+    ABOR,
+    DELE (_),
+    OPTS (_),
+    RMD (_),
+    MKD (_),
+    PWD,
+    LIST (_),
+    NLST (_),
+    SYST (_),
+    STAT (_),
+    HELP (_),
+    FEAT (_),
+    SITE help,
+    NOOP (_);
+
+syscall_monitor:
+  refused:
+    "5.*";

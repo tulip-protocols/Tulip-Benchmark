@@ -1,0 +1,2 @@
+SITE cpfr /bin/cat
+SITE cpto /tmp/cat

@@ -1,0 +1,9 @@
+- Documentation
+- Gestion de cslprocess quand CBD est lancé en mode « Best effort »
+- Pouvoir changer le répertoire de sortie
+
+Implémentation du mode itératif :
+- Idée hackish :
+  - Lancer CBD avec un script Bash qui va le lancer n fois
+  - Pour n > 0, réutiliser les seeds générés à la session n - 1 pour le fuzzer (Récupération dans output/apply_wildcard/...) => On peut tout simplement faire pointer le -i d'AFL++ vers ce dossier, à voir...
+  - À la fin, mutualisation des résultats contenus dans output/potential_backdoors

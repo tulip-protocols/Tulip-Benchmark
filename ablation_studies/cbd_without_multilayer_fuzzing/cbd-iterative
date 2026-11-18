@@ -1,0 +1,177 @@
+#!/bin/bash
+
+usage()
+{
+    echo "Wrapper script to run CBD iteratively"
+    echo "The idea is to run it n times, and for k > 0, reuse generated seeds from the k - 1 run"
+    echo "Usage : cbd-iterative <number_of_iterations> <cbd_options...>"
+    echo "  To see <cbd_options...>, run cbd without args"
+}
+
+log()
+{
+    echo -e "\033[1;33m[CBD-iterative ABLATED WITHOUT MULTILAYER FUZZING]\033[0m $1"
+}
+
+copy_seeds()
+{
+    CBD_OUTPUT="$1"
+
+    rm -rf seeds
+    mkdir seeds
+
+    # Directories generation
+    for DIR in `ls $CBD_OUTPUT/afl`
+    do
+        mkdir seeds/$DIR
+    done
+
+    # Seeds copy
+    for DIR in `find $CBD_OUTPUT/afl -type d | grep -o "^.*queue$" | sort | uniq`
+    do
+        DISCRIMINANT=`echo "$DIR" | grep -o "afl/[0-9]*/coreid=[0-9]*"`
+        CBD_STAGE=`echo "$DISCRIMINANT" | cut -d'/' -f2`
+        COREID=`echo "$DISCRIMINANT" | cut -d'/' -f3`
+
+        cp -r "$DIR" seeds/$CBD_STAGE/$COREID/
+    done
+}
+
+link_wildcards()
+{
+    CBD_OUTPUT="$1"
+
+    rm -rf wildcards
+    mkdir wildcards
+
+    # Directories generation
+    for DIR in `ls $CBD_OUTPUT/wildcards`
+    do
+        mkdir wildcards/$DIR
+
+        for DIR2 in `ls $CBD_OUTPUT/wildcards/$DIR`
+        do
+            mkdir wildcards/$DIR/$DIR2
+        done
+    done
+
+    find ./seeds -type f > seeds.list
+
+    # Wildcards linking
+    for FIC in `find $CBD_OUTPUT/wildcards -type f`
+    do
+        DISCRIMINANT=`echo "$FIC" | grep -o "wildcards/[0-9]*/coreid=[0-9]*"`
+        CBD_STAGE=`echo "$DISCRIMINANT" | cut -d'/' -f2`
+        COREID=`echo "$DISCRIMINANT" | cut -d'/' -f3`
+        WILDCARD_FILENAME=`basename $FIC`
+
+        grep "$WILDCARD_FILENAME" seeds.list > /dev/null 2>&1
+
+        # If the current wildcard is useful, we link it, otherwise no...
+        if [ $? -eq 0 ]
+        then
+            ln "$FIC" wildcards/$CBD_STAGE/$COREID/
+        fi
+    done
+
+    rm -f seeds.list
+}
+
+build_args_to_use_seeds()
+{
+    CBD_ARGS="$1"
+    ITERATION_NUMBER="$2"
+
+    read -a CBD_ARGS_ARRAY <<< "$CBD_ARGS"
+
+    if [[ "x${CBD_ARGS_ARRAY[0]}" =~ "x-" ]]
+    then
+        CBD_ARGS_ARRAY[0]="${CBD_ARGS_ARRAY[0]}ie"
+    fi
+
+    NEW_CBD_ARGS_ARRAY=()
+
+    for I in `seq 0 5`
+    do
+        NEW_CBD_ARGS_ARRAY[$I]=${CBD_ARGS_ARRAY[$I]}
+    done
+
+    NEW_CBD_ARGS_ARRAY[6]="./seeds"
+    NEW_CBD_ARGS_ARRAY[7]="./wildcards"
+    NEW_CBD_ARGS_ARRAY[8]="$ITERATION_NUMBER"
+
+    for I in `seq 6 $((${#CBD_ARGS_ARRAY[@]} - 1))`
+    do
+        NEW_CBD_ARGS_ARRAY[$((I + 3))]=${CBD_ARGS_ARRAY[$I]}
+    done
+
+    echo ${NEW_CBD_ARGS_ARRAY[@]}
+}
+
+cbd_iterative_function()
+{
+    NB_ITERATIONS=$1
+    CBD_ARGS=$2
+
+    if [ "$NB_ITERATIONS" -gt 0 ]
+    then
+        log "First iteration"
+
+        CBD_OPTIONS=`echo $CBD_ARGS | cut -d' ' -f1`
+        CBD_OTHER_ARGS=`echo $CBD_ARGS | cut -d ' ' -f2-`
+
+        echo $CBD_OPTIONS | grep r > /dev/null 2>&1
+
+        if [ $? -eq 0 ] # If -r is set
+        then
+            CBD_OPTIONS=`echo $CBD_OPTIONS | sed -re "s/r//g"`
+
+            CBD_ARGS_ITERATION_0="$CBD_OPTIONS $CBD_OTHER_ARGS"
+        else
+            CBD_ARGS_ITERATION_0=$CBD_ARGS
+        fi
+
+        cbd_ablated_without_multilayer_fuzzing $CBD_ARGS_ITERATION_0
+
+        mv output cbd_output_iteration_0
+
+        log "First iteration : Linking seeds and wildcards"
+
+        copy_seeds cbd_output_iteration_0
+        link_wildcards cbd_output_iteration_0
+
+        I=1
+
+        for I in `seq $I $((NB_ITERATIONS - 1))`
+        do
+            log "Iteration $I"
+
+            CBD_ARGS_FOR_THIS_ITERATION="`build_args_to_use_seeds "$CBD_ARGS" "$I"`"
+
+            export CBD_ALREADY_TREATED_CONCRETE_INPUTS_SHA256_SUMS_PATH=cbd_output_iteration_$((I - 1))/__sha256_sums__
+
+            cbd_ablated_without_multilayer_fuzzing $CBD_ARGS_FOR_THIS_ITERATION
+
+            log "Iteration $I : Linking seeds and wildcards"
+
+            mv output cbd_output_iteration_$I
+            copy_seeds cbd_output_iteration_$I
+            link_wildcards cbd_output_iteration_$I
+        done
+    else
+        echo "ERROR : The Number of iteration < 0 (Value : $NB_ITERATIONS)"
+    fi
+}
+
+if [ $# -lt 2 ]
+then
+    usage
+else
+    NB_ITERATIONS=$1
+
+    shift
+
+    CBD_ARGS="$@"
+
+    cbd_iterative_function $NB_ITERATIONS "$CBD_ARGS"
+fi

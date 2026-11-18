@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+<TITLE>Authenticating Users
+</title>
+</head>
+<body>
+<h1>Authenticating Users
+</h1>
+
+<h2>Introduction</h2>
+
+The Cyrus IMAP Server uses the Cyrus SASL library to authenticate
+users. Please refer to the Cyrus SASL documentation for specific
+details on SASL. This section focuses specifically on the server processes
+distributed with Cyrus IMAPd.
+
+<h2>Authentication Mechanisms</h2>
+
+At this writing, the underlying Cyrus SASL library supports a
+variety of SASL mechanisms, including PLAIN, SCRAM-SHA-1, SCRAM-SHA-256
+and GSSAPI.  The Cyrus IMAP, POP, and LMTP servers also support
+STARTTLS using client-side certificates and the EXTERNAL
+authentication method.
+
+<p>GSSAPI is specific to Kerberos version 5. Additionally, STARTTLS client
+side certificates have not been extensively tested.
+
+<p>When STARTTLS is enabled, the PLAIN SASL mechanism (if installed)
+also becomes available. This is because one should not pass a clear
+text password over the wire unless the connection is encrypted.
+
+<p>The IMAP protocol also supports a way for users to authenticate without
+using SASL (the specification). This is via the 'LOGIN' command (not to be
+confused by the LOGIN SASL mechanism). The IMAP LOGIN command (as with
+PLAIN) will send your password in clear-text to the server.  In this case,
+the password is still verified through the Cyrus SASL library, though no
+SASL mechanism actually performs a negotiation.
+
+<p>The POP server is capable of APOP authentication, but this requires that
+Cyrus SASL be compiled <tt>--with-checkapop</tt>, and also that you are using
+an auxprop backend for your password store (e.g. the sasldb auxprop plugin).
+
+<h2>Authentication Recommendations</h2>
+
+<ul>
+<li>If you are running a mail server on a single machine, we recommend
+that you configure the system to use CRAM-MD5 or DIGEST-MD5. We have not
+provided utilities for you to let users change their passwords but either
+we or someone else might provide that feature.
+
+<li>If you have more than one mail server, we recommend that  you
+configure the system to use GSSAPI and Kerberos5.
+
+<li>If you have some other authentication mechanism that requires the
+clear text password, you should use <tt>saslauthd</tt>.
+
+<p><tt>saslauthd</tt> is something specific to the Cyrus SASL
+libraries. While it is less generic than PAM, it is much simpler
+to configure. The IMAP server simply sends a userid and a corresponding
+password down a Unix domain pipe. Then, <tt>saslauthd</tt> takes that
+userid and password and tries to authenticate with it -- using whatever
+authentication you use -- and simply returns "yes" or "no" as to
+whether or not the password was correct.
+
+<p>It is possible to configure <tt>saslauthd</tt> to check these
+passwords via a PAM mechanism, <tt>/etc/passwd</tt>, or other
+possibilities.
+
+<p>PAM stands for pluggable authentication modules and the purpose is
+to provide a common API which applications can use to obtain
+authentication for a user. You can think of PAM as a complementary
+layer under the SASL layer. See <a
+href="http://www.kernel.org/pub/linux/libs/pam/FAQ">
+http://www.kernel.org/pub/linux/libs/pam/FAQ</a> for more information
+on PAM.  By using a PAM module, all the other applications on your
+system can take advantage of it -- for example, login, xlock, etc.
+
+<p>Keep in mind that when you use PLAIN or LOGIN you should encrypt
+the stream so a user's password cannot be trivially sniffed off of
+the network.
+</ul>
+
+<h2>Configuring Authentication</h2>
+
+<p>Cyrus SASL has a number of options that can be configured by
+the application.  To configure these via imapd.conf, simply prefix
+the appropriate option name with <tt>sasl_</tt> (e.g.
+<tt>pwcheck_method</tt> becomes <tt>sasl_pwcheck_method</tt>).
+
+<h3>/etc/sasldb2</h3>
+
+<p>The easiest method for authenticating users is to use the libsasl
+authentication database and create users using the
+"<tt>saslpasswd2</tt>" utility.  Set "<tt>sasl_pwcheck_method:
+auxprop</tt>", and be sure that the SASL sasldb auxprop module is
+installed (it is, by default). Make sure Cyrus can read "<tt>/etc/sasldb2</tt>":
+<pre>
+<kbd>   chown cyrus /etc/sasldb2*
+</kbd></pre>
+
+<h3>Shadow Passwords</h3>
+
+<p>If you want to authenticate users from "<tt>/etc/shadow</tt>", things
+are considerably more complicated, since the cyrus user cannot read the
+shadow password file.  Additionally, this will not allow you to use shared
+secret mechanisms.  To do this, it is necessary to configure libsasl with
+<tt>saslauthd</tt> support, and set "<tt>sasl_pwcheck_method:
+saslauthd</tt>".  The SASL library will then make calls to an external
+utility running as root to authenticate users.
+
+<h3>Kerberos</h3><a name="kerberos"></a>
+
+<h4>Configuring Kerberos v5</h4>
+
+<p>Cyrus IMAP supports Kerberos v5 if the SASL library was compiled
+with GSSAPI support.</p>
+
+<p>You'll have to create a Kerberos v5 identity for the server.
+Kerberos v5 keys are generally stored in "<tt>/etc/krb5.keytab</tt>".
+
+<ol>
+<li>Add the "<tt>imap/hostname</tt>" key using "<tt>kadmin</tt>".
+
+<li> Let the cyrus user read "<tt>/etc/krb5.keytab</tt>":
+user:
+<pre>
+<kbd>   chown cyrus /etc/krb5.keytab
+</kbd></pre></li>
+
+<li>Test using <tt>imtest -m GSSAPI</tt>.  <tt>imtest</tt> will
+attempt to authorize as the current Unix user regardless of the
+current ticket's held.  Override this with the <tt>-u</tt> option.</li>
+</ol>
+
+<HR>
+last modified: $Date: 2010/01/06 17:01:29 $
+</BODY></HTML>
