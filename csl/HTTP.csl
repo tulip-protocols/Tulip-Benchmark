@@ -1,0 +1,40 @@
+arg_separator = ' ' multiple;
+initial_level = methods;
+ignore_empty_commands = yes;
+ignored_chars = '"';
+messages_type = packets;
+
+levels:
+  level methods:
+    GET (arg == "$public_page_1" => level = headers | arg == "$public_page_2" => level = headers | _) "HTTP/1.1",
+    POST (arg == "$public_page_1" => level = headers | arg == "$public_page_2" => level = headers | _) "HTTP/1.1",
+    PUT (arg == "$public_page_1" => level = headers | arg == "$public_page_2" => level = headers | _) "HTTP/1.1",
+    PATCH (arg == "$public_page_1" => level = headers | arg == "$public_page_2" => level = headers | _) "HTTP/1.1",
+    OPTIONS (arg == "$public_page_1" => level = headers | arg == "$public_page_2" => level = headers | _) "HTTP/1.1";
+
+  level headers:
+    "Host:" (arg == "localhost:8080" => level = headers),
+    "User-agent:" (_),
+    "Accept:" (arg == "*/*" => level = headers),
+    "Content-Type:" (arg == "image/jpeg" => level = headers),
+    "Content-Length:" (_);
+
+  level administrator:
+    GET (arg == "$private_page_1" => level = headers_administrator | arg == "$private_page_2" => level = headers_administrator | _) "HTTP/1.1",
+    POST (arg == "$private_page_1" => level = headers_administrator | arg == "$private_page_2" => level = headers_administrator | _) "HTTP/1.1",
+    PUT (arg == "$private_page_1" => level = headers_administrator | arg == "$private_page_2" => level = headers_administrator | _) "HTTP/1.1",
+    PATCH (arg == "$private_page_1" => level = headers_administrator | arg == "$private_page_2" => level = headers_administrator | _) "HTTP/1.1",
+    OPTIONS (arg == "$private_page_1" => level = headers_administrator | arg == "$private_page_2" => level = headers_administrator | _) "HTTP/1.1";
+
+  level headers_administrator:
+    "Host:" (arg == "localhost:8080" => level = headers_administrator),
+    "User-agent:" (_),
+    "Accept:" (arg == "*/*" => level = headers_administrator),
+    "Content-Type:" (arg == "image/jpeg" => level = headers_administrator),
+    "Content-Length:" (_);
+
+syscall_monitor:
+  refused:
+    "UNKNOWN 4.*",
+    "HTTP/1.1 4.*",
+    "HTTP/1.1 5.*";
